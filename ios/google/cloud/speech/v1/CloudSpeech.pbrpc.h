@@ -4,7 +4,7 @@
 
 #if !defined(GPB_GRPC_PROTOCOL_ONLY) || !GPB_GRPC_PROTOCOL_ONLY
 #import <ProtoRPC/ProtoService.h>
-#import <ProtoRPC/ProtoRPC.h>
+#import <ProtoRPC/ProtoRPCLegacy.h>
 #import <RxLibrary/GRXWriteable.h>
 #import <RxLibrary/GRXWriter.h>
 #endif
@@ -37,12 +37,16 @@
   #import "google/rpc/Status.pbobjc.h"
 #endif
 
+@class GRPCUnaryProtoCall;
+@class GRPCStreamingProtoCall;
+@class GRPCCallOptions;
+@protocol GRPCProtoResponseHandler;
 @class GRPCProtoCall;
 
 
 NS_ASSUME_NONNULL_BEGIN
 
-@protocol Speech <NSObject>
+@protocol Speech2 <NSObject>
 
 #pragma mark Recognize(RecognizeRequest) returns (RecognizeResponse)
 
@@ -50,11 +54,49 @@ NS_ASSUME_NONNULL_BEGIN
  * Performs synchronous speech recognition: receive results after all audio
  * has been sent and processed.
  */
+- (GRPCUnaryProtoCall *)recognizeWithMessage:(RecognizeRequest *)message responseHandler:(id<GRPCProtoResponseHandler>)handler callOptions:(GRPCCallOptions *_Nullable)callOptions;
+
+#pragma mark LongRunningRecognize(LongRunningRecognizeRequest) returns (Operation)
+
+/**
+ * Performs asynchronous speech recognition: receive results via the
+ * google.longrunning.Operations interface. Returns either an
+ * `Operation.error` or an `Operation.response` which contains
+ * a `LongRunningRecognizeResponse` message.
+ */
+- (GRPCUnaryProtoCall *)longRunningRecognizeWithMessage:(LongRunningRecognizeRequest *)message responseHandler:(id<GRPCProtoResponseHandler>)handler callOptions:(GRPCCallOptions *_Nullable)callOptions;
+
+#pragma mark StreamingRecognize(stream StreamingRecognizeRequest) returns (stream StreamingRecognizeResponse)
+
+/**
+ * Performs bidirectional streaming speech recognition: receive results while
+ * sending audio. This method is only available via the gRPC API (not REST).
+ */
+- (GRPCStreamingProtoCall *)streamingRecognizeWithResponseHandler:(id<GRPCProtoResponseHandler>)handler callOptions:(GRPCCallOptions *_Nullable)callOptions;
+
+@end
+
+/**
+ * The methods in this protocol belong to a set of old APIs that have been deprecated. They do not
+ * recognize call options provided in the initializer. Using the v2 protocol is recommended.
+ */
+@protocol Speech <NSObject>
+
+#pragma mark Recognize(RecognizeRequest) returns (RecognizeResponse)
+
+/**
+ * Performs synchronous speech recognition: receive results after all audio
+ * has been sent and processed.
+ *
+ * This method belongs to a set of APIs that have been deprecated. Using the v2 API is recommended.
+ */
 - (void)recognizeWithRequest:(RecognizeRequest *)request handler:(void(^)(RecognizeResponse *_Nullable response, NSError *_Nullable error))handler;
 
 /**
  * Performs synchronous speech recognition: receive results after all audio
  * has been sent and processed.
+ *
+ * This method belongs to a set of APIs that have been deprecated. Using the v2 API is recommended.
  */
 - (GRPCProtoCall *)RPCToRecognizeWithRequest:(RecognizeRequest *)request handler:(void(^)(RecognizeResponse *_Nullable response, NSError *_Nullable error))handler;
 
@@ -66,6 +108,8 @@ NS_ASSUME_NONNULL_BEGIN
  * google.longrunning.Operations interface. Returns either an
  * `Operation.error` or an `Operation.response` which contains
  * a `LongRunningRecognizeResponse` message.
+ *
+ * This method belongs to a set of APIs that have been deprecated. Using the v2 API is recommended.
  */
 - (void)longRunningRecognizeWithRequest:(LongRunningRecognizeRequest *)request handler:(void(^)(Operation *_Nullable response, NSError *_Nullable error))handler;
 
@@ -74,6 +118,8 @@ NS_ASSUME_NONNULL_BEGIN
  * google.longrunning.Operations interface. Returns either an
  * `Operation.error` or an `Operation.response` which contains
  * a `LongRunningRecognizeResponse` message.
+ *
+ * This method belongs to a set of APIs that have been deprecated. Using the v2 API is recommended.
  */
 - (GRPCProtoCall *)RPCToLongRunningRecognizeWithRequest:(LongRunningRecognizeRequest *)request handler:(void(^)(Operation *_Nullable response, NSError *_Nullable error))handler;
 
@@ -83,12 +129,16 @@ NS_ASSUME_NONNULL_BEGIN
 /**
  * Performs bidirectional streaming speech recognition: receive results while
  * sending audio. This method is only available via the gRPC API (not REST).
+ *
+ * This method belongs to a set of APIs that have been deprecated. Using the v2 API is recommended.
  */
 - (void)streamingRecognizeWithRequestsWriter:(GRXWriter *)requestWriter eventHandler:(void(^)(BOOL done, StreamingRecognizeResponse *_Nullable response, NSError *_Nullable error))eventHandler;
 
 /**
  * Performs bidirectional streaming speech recognition: receive results while
  * sending audio. This method is only available via the gRPC API (not REST).
+ *
+ * This method belongs to a set of APIs that have been deprecated. Using the v2 API is recommended.
  */
 - (GRPCProtoCall *)RPCToStreamingRecognizeWithRequestsWriter:(GRXWriter *)requestWriter eventHandler:(void(^)(BOOL done, StreamingRecognizeResponse *_Nullable response, NSError *_Nullable error))eventHandler;
 
@@ -101,8 +151,11 @@ NS_ASSUME_NONNULL_BEGIN
  * Basic service implementation, over gRPC, that only does
  * marshalling and parsing.
  */
-@interface Speech : GRPCProtoService<Speech>
-- (instancetype)initWithHost:(NSString *)host NS_DESIGNATED_INITIALIZER;
+@interface Speech : GRPCProtoService<Speech2, Speech>
+- (instancetype)initWithHost:(NSString *)host callOptions:(GRPCCallOptions *_Nullable)callOptions NS_DESIGNATED_INITIALIZER;
++ (instancetype)serviceWithHost:(NSString *)host callOptions:(GRPCCallOptions *_Nullable)callOptions;
+// The following methods belong to a set of old APIs that have been deprecated.
+- (instancetype)initWithHost:(NSString *)host;
 + (instancetype)serviceWithHost:(NSString *)host;
 @end
 #endif

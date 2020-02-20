@@ -6,11 +6,13 @@ Pod::Spec.new do |s|
   s.homepage = 'http://github.com/GoogleCloudPlatform/ios-docs-samples'
   s.source   = { :git => 'https://github.com/GoogleCloudPlatform/ios-docs-samples.git',
                  :tag => '0.0.1' }
-  s.summary  = 'Service definitions for Google Cloud Platform APIs'	  
+  s.summary  = 'Service definitions for Google Cloud Platform APIs'
+  s.source_files  = "*.{h,m}", 'google/**/*.*'
 
   s.ios.deployment_target = '7.1'
   s.osx.deployment_target = '10.9'
 
+  s.dependency "React"
  # Run protoc with the Objective-C and gRPC plugins to generate protocol messages and gRPC clients.
   s.dependency "!ProtoCompiler-gRPCPlugin", "~> 1.6"
 
@@ -21,9 +23,9 @@ Pod::Spec.new do |s|
   protoc_dir = "#{pods_root}/!ProtoCompiler"
   protoc = "#{protoc_dir}/protoc"
   plugin = "#{pods_root}/!ProtoCompiler-gRPCPlugin/grpc_objective_c_plugin"
-  
+
   # Run protoc with the Objective-C and gRPC plugins to generate protocol messages and gRPC clients.
-  # You can run this command manually if you later change your protos and need to regenerate.  
+  # You can run this command manually if you later change your protos and need to regenerate.
   s.prepare_command = <<-CMD
     #{protoc} \
         --plugin=protoc-gen-grpc=#{plugin} \
@@ -51,11 +53,11 @@ Pod::Spec.new do |s|
     ss.dependency "gRPC-ProtoRPC"
     ss.dependency "#{s.name}/Messages"
   end
-  
+
   s.pod_target_xcconfig = {
     'GCC_PREPROCESSOR_DEFINITIONS' => '$(inherited) GPB_USE_PROTOBUF_FRAMEWORK_IMPORTS=1',
 	  'USER_HEADER_SEARCH_PATHS' => '$SRCROOT/..'
   }
-  
+
 end
 

@@ -1,14 +1,18 @@
 
 package com.reactlibrary;
 
+import android.app.ActivityManager;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.IBinder;
-import android.support.annotation.Nullable;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
+
+import android.provider.Settings;
 import android.text.TextUtils;
-import android.util.Log;
 
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.ReactApplicationContext;
@@ -59,7 +63,7 @@ public class RNGoogleSpeechApiModule extends ReactContextBaseJavaModule {
   }
 
   @ReactMethod
-  private void cancelSpeech() {
+  public void cancelSpeech() {
     stopVoiceRecorder();
   }
 
@@ -133,13 +137,73 @@ public class RNGoogleSpeechApiModule extends ReactContextBaseJavaModule {
                 }
               }
             }
+
+            @Override
+            public void onSpeechRecognizedError() {
+              if(!isStop) {
+                WritableMap params = Arguments.createMap();
+
+                params.putString("text", "");
+                params.putBoolean("isFinal", true);
+                sendEvent(reactContext, "onSpeechToTextCustom", params);
+
+                if (mVoiceRecorder != null) {
+                  mVoiceRecorder.dismiss();
+                  stopVoiceRecorder();
+                }
+
+                try {
+                  if (Settings.Global.getInt(reactContext.getContentResolver(), Settings.Global.AUTO_TIME) == 0) {
+                    getCurrentActivity().runOnUiThread(new Runnable() {
+                      public void run() {
+                        new AlertDialog.Builder(getCurrentActivity())
+                                .setTitle("Speech to text")
+                                .setMessage("You need to set the automatic date and time in order for this feature")
+                                .setCancelable(true)
+                                .setNegativeButton("CANCEL", new DialogInterface.OnClickListener() {
+                                  @Override
+                                  public void onClick(DialogInterface dialog, int which) {
+
+                                  }
+                                })
+                                .setPositiveButton("GO TO SETTINGS", new DialogInterface.OnClickListener() {
+                                  @Override
+                                  public void onClick(DialogInterface dialog, int which) {
+                                    Intent intent = new Intent(android.provider.Settings.ACTION_DATE_SETTINGS);
+                                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                                    reactContext.startActivity(intent);
+                                  }
+                                }).show();
+                      }
+                    });
+                  }
+                } catch (Settings.SettingNotFoundException e) {
+                  e.printStackTrace();
+                }
+              }
+            }
           };
 
   @ReactMethod
   public void setApiKey(String apiKey) {
     this.apiKey = apiKey;
-    Intent serviceIntent = new Intent(reactContext, SpeechService.class);
-    reactContext.bindService(serviceIntent, mServiceConnection, Context.BIND_AUTO_CREATE);
+
+    if (isServiceRunning(SpeechService.class)) {
+      reactContext.unbindService(mServiceConnection);
+    }
+
+    Intent intent = new Intent(reactContext, SpeechService.class);
+    reactContext.bindService(intent, mServiceConnection, Context.BIND_AUTO_CREATE);
+  }
+
+  private boolean isServiceRunning(Class<?> serviceClass) {
+    ActivityManager manager = (ActivityManager) reactContext.getSystemService(Context.ACTIVITY_SERVICE);
+    for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
+      if (serviceClass.getName().equals(service.service.getClassName())) {
+        return true;
+      }
+    }
+    return false;
   }
 
 //  @ReactMethod

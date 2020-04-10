@@ -8,10 +8,9 @@ import android.os.AsyncTask;
 import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import android.util.Log;
-import android.os.Bundle;
 
 import com.google.auth.Credentials;
 import com.google.auth.oauth2.AccessToken;
@@ -64,6 +63,8 @@ public class SpeechService extends Service {
          */
         void onSpeechRecognized(String text, boolean isFinal);
 
+        void onSpeechRecognizedError();
+
     }
 
     private static final String TAG = "SpeechService";
@@ -112,7 +113,11 @@ public class SpeechService extends Service {
 
         @Override
         public void onError(Throwable t) {
+            for (Listener listener : mListeners) {
+                listener.onSpeechRecognizedError();
+            }
             Log.e(TAG, "Error calling the API.", t);
+
         }
 
         @Override
@@ -297,16 +302,21 @@ public class SpeechService extends Service {
                             .createScoped(SCOPE)))
                     .build();
             mApi = SpeechGrpc.newStub(channel);
-
-            // Schedule access token refresh before it expires
-            if (mHandler != null) {
-                mHandler.postDelayed(mFetchAccessTokenRunnable,
-                        Math.max(accessToken.getExpirationTime().getTime()
-                                - System.currentTimeMillis()
-                                - ACCESS_TOKEN_FETCH_MARGIN, ACCESS_TOKEN_EXPIRATION_TOLERANCE));
+            try {
+                // Schedule access token refresh before it expires
+                if (mHandler != null) {
+                    mHandler.postDelayed(mFetchAccessTokenRunnable,
+                            Math.max(accessToken.getExpirationTime().getTime()
+                                    - System.currentTimeMillis()
+                                    - ACCESS_TOKEN_FETCH_MARGIN, ACCESS_TOKEN_EXPIRATION_TOLERANCE));
+                }
+            } catch (Exception e) {
+                Log.e(TAG, e.getMessage());
             }
         }
     }
+
+
 
     /**
      * Authenticates the gRPC channel using the specified {@link GoogleCredentials}.

@@ -141,7 +141,11 @@ public class SpeechService extends Service {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        mHandler.removeCallbacks(mFetchAccessTokenRunnable);
+        try {
+            mHandler.removeCallbacks(mFetchAccessTokenRunnable);
+        } catch (Exception e) {
+            Log.e(TAG, e.getMessage());
+        }
         mHandler = null;
         // Release the gRPC channel.
         if (mApi != null) {

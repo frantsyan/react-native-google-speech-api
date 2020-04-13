@@ -44,7 +44,7 @@ RCT_EXPORT_METHOD(startSpeech) {
 //    [_audioRecorder record];
     [AudioController sharedInstance].delegate = self;
     _audioSession = [AVAudioSession sharedInstance];
-    [_audioSession setCategory:AVAudioSessionCategoryRecord error:nil];
+    [_audioSession setCategory:AVAudioSessionCategoryPlayAndRecord error:nil];
     
     _audioData = [[NSMutableData alloc] init];
     [[AudioController sharedInstance] prepareWithSampleRate:SAMPLE_RATE];

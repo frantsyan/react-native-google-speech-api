@@ -13,6 +13,7 @@ import androidx.appcompat.app.AlertDialog;
 
 import android.provider.Settings;
 import android.text.TextUtils;
+import android.util.Log;
 
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.ReactApplicationContext;
@@ -189,7 +190,11 @@ public class RNGoogleSpeechApiModule extends ReactContextBaseJavaModule {
     this.apiKey = apiKey;
 
     if (isServiceRunning(SpeechService.class)) {
-      reactContext.unbindService(mServiceConnection);
+      try {
+        reactContext.unbindService(mServiceConnection);
+      } catch (Exception e) {
+        Log.e("ERROR", e.getMessage());
+      }
     }
 
     Intent intent = new Intent(reactContext, SpeechService.class);

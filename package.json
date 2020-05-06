@@ -47,7 +47,7 @@
   "name": "react-native-google-speech-api",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/hayanmind/react-native-google-speech-api.git"
+    "url": "git+https://github.com/frantsyan/react-native-google-speech-api.git"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
